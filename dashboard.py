@@ -13,7 +13,7 @@ import RPi.GPIO as GPIO
 
 
 
-DHTPin = 18  # define the pin of DHT11
+DHTPin = 23  # define the pin of DHT11
 
 
 email_sent = False
@@ -30,8 +30,8 @@ def check_email_reply():
     global email_received
     # Connect to the IMAP server
     imap_url = "imap-mail.outlook.com"
-    email_address = "iottestingproject@outlook.com"
-    password = "iotproject123"
+    email_address = "iot-project-2023@outlook.com"
+    password = "bandar123"
     imap = imaplib.IMAP4_SSL(imap_url)
     imap.login(email_address, password)
     imap.select("Inbox")
@@ -200,8 +200,8 @@ def update_fan(value):
 def send_email():
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
-    sender_email = "iottestingproject@outlook.com"
-    receiver_email = "iottestingproject@outlook.com"
+    sender_email = "iot-project-2023@outlook.com"
+    receiver_email = "bandar123"
     password = "iotproject123"
 
     subject = "Subject: Turn on FAN"
