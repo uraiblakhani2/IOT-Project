@@ -9,6 +9,8 @@ from email.mime.text import MIMEText
 from email.header import decode_header
 import imaplib
 import email
+import time
+
 import RPi.GPIO as GPIO
 
 
@@ -19,6 +21,10 @@ DHTPin = 23  # define the pin of DHT11
 email_sent = False
 email_received = False
 GPIO.setwarnings(False)
+last_email_received_time = 0
+fan_should_be_on = False
+
+
 
 app = Dash(__name__, external_stylesheets=['./assets/dashboard.css'])
 
@@ -30,7 +36,7 @@ def check_email_reply():
     global email_received
     # Connect to the IMAP server
     imap_url = "imap-mail.outlook.com"
-    email_address = "iot-project-2023@outlook.com"
+    email_address = "uraibiotproject@outlook.com"
     password = "bandar123"
     imap = imaplib.IMAP4_SSL(imap_url)
     imap.login(email_address, password)
@@ -47,12 +53,20 @@ def check_email_reply():
     if email_message.get_content_maintype() == 'multipart':
         for part in email_message.get_payload():
             if part.get_content_type() == 'text/plain':
-                body = part.get_payload(decode=True).decode()
+                body = part.get_payload(decode=True)
+                try:
+                    body = body.decode('utf-8')
+                except UnicodeDecodeError:
+                    try:
+                        body = body.decode('iso-8859-1')
+                    except UnicodeDecodeError:
+                        body = body.decode('utf-16')
                 if "YES" in body.upper() and not email_received:
                     email_received = True
                     fan_on = True
     imap.close()
     return fan_on
+
 
 
 app.layout = html.Div([
@@ -66,7 +80,7 @@ app.layout = html.Div([
     html.Div(
         dcc.Interval(
             id='interval-component',
-            interval=10000,  
+            interval=30000,  
             n_intervals=0
         )
     ),
@@ -173,13 +187,16 @@ def update_output(value):
             print("Temperature : %.2f, \n"%(dht.temperature))
             break
         time.sleep(0.1)
-    if (dht.temperature > 10) and not email_sent:
+    if (dht.temperature > 18) and not email_sent:
         send_email()
         email_sent = True
         print("Email sent!")
-    elif dht.temperature <= 24:
-        email_sent = False   
+    elif dht.temperature <= 17:
+        email_sent = False
     return dht.temperature
+
+
+
 
 @app.callback(
     Output('FanOn', 'style'),
@@ -188,21 +205,29 @@ def update_output(value):
     Input('interval-component', 'n_intervals')
 )
 def update_fan(value):
-    global email_sent, email_received
+    global email_sent, email_received, last_email_received_time, fan_should_be_on
     fan_on = check_email_reply()
+
     if fan_on:
-        return {'display': 'block'}, {'display': 'none'}, True
+        fan_should_be_on = True
+        last_email_received_time = time.time()
+    elif time.time() - last_email_received_time > 60:
+        email_received = False
+        fan_should_be_on = False
+
+    if fan_should_be_on:
+        return {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, True
     else:
-        return {'display': 'none'}, {'display': 'block'}, False
+        return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False
 
 
 
 def send_email():
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
-    sender_email = "iot-project-2023@outlook.com"
-    receiver_email = "bandar123"
-    password = "iotproject123"
+    sender_email = "uraibiotproject@outlook.com"
+    receiver_email = "uraibiotproject@outlook.com"
+    password = "bandar123"
 
     subject = "Subject: Turn on FAN"
     body = "The current temperature is over 24 Would you like to turn on the fan?”"

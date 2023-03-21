@@ -71,17 +71,7 @@
   }
 
   
-#FanOn{
-  max-width: 200px;
-  max-height: 200px;
-  display: none;
 
-}
- 
-#FanOff{
-  max-width: 200px;
-  max-height: 200px;
-}
   #led-indicator {
     display: none;
   }
