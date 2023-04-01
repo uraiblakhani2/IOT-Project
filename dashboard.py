@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import decode_header
 import imaplib
+import threading
 import email
 import time
 
@@ -45,7 +46,13 @@ def on_message(client, userdata, message):
 
 mqtt_client.on_message = on_message
 mqtt_client.subscribe("lightIntensity")
-mqtt_client.loop_start()
+def mqtt_loop():
+    while True:
+        mqtt_client.loop()
+
+mqtt_thread = threading.Thread(target=mqtt_loop)
+mqtt_thread.daemon = True
+mqtt_thread.start()
 
 
 def check_email_reply():
