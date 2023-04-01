@@ -2,6 +2,7 @@ from dash import Dash, html, Input, Output
 import dash_daq as daq
 import Freenove_DHT as DHT
 import time
+import paho.mqtt.client as mqtt
 from dash import dcc
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -15,7 +16,6 @@ import RPi.GPIO as GPIO
 from time import sleep
 
 
-
 DHTPin = 23  # define the pin of DHT11
 
 
@@ -26,11 +26,26 @@ last_email_received_time = 0
 fan_should_be_on = False
 
 
-
 app = Dash(__name__, external_stylesheets=['./assets/dashboard.css'])
 
 
+mqtt_client = mqtt.Client("dashboard")
+mqtt_server = "192.168.2.67"
+# Set your MQTT username and password here
+mqtt_client.username_pw_set("username", "password")
+mqtt_client.connect(mqtt_server, 1883)
 
+light_intensity = 0
+
+
+def on_message(client, userdata, message):
+    global light_intensity
+    light_intensity = int(message.payload.decode("utf-8"))
+
+
+mqtt_client.on_message = on_message
+mqtt_client.subscribe("lightIntensity")
+mqtt_client.loop_start()
 
 
 def check_email_reply():
@@ -69,19 +84,19 @@ def check_email_reply():
     return fan_on
 
 
-
 app.layout = html.Div([
     html.Div(
         id="app-Header",
         children=[
-            html.Div('IOT Dashboard by Eris, Uraib And George', className="app-header--title")
+            html.Div('IOT Dashboard by Eris, Uraib And George',
+                     className="app-header--title")
         ]
     ),
 
     html.Div(
         dcc.Interval(
             id='interval-component',
-            interval=10000,  
+            interval=10000,
             n_intervals=0
         )
     ),
@@ -135,13 +150,15 @@ app.layout = html.Div([
         id="fan-area",
         children=[
             html.H2('Fan Status'),
-            
+
             html.Div(children=[
-                html.Img(id='FanOn', src='https://cdn.dribbble.com/users/3892547/screenshots/11096911/ezgif.com-resize.gif', ),
-                
+                html.Img(
+                    id='FanOn', src='https://cdn.dribbble.com/users/3892547/screenshots/11096911/ezgif.com-resize.gif', ),
+
             ]),
             html.Div(children=[
-                html.Img(id='FanOff', src='https://cdn-icons-png.flaticon.com/512/925/925993.png', ),
+                html.Img(
+                    id='FanOff', src='https://cdn-icons-png.flaticon.com/512/925/925993.png', ),
             ]),
             daq.Indicator(
                 id='fan-indicator',
@@ -150,6 +167,27 @@ app.layout = html.Div([
             )
         ]
     ),
+
+    html.Div(
+        id="light-intensity-area",
+        children=[
+            html.H2('Light Intensity', className="tempTitle"),
+            daq.Gauge(
+                id='light-intensity-indicator',
+                color={"gradient": True, "ranges": {
+                    "green": [0, 300], "yellow":[300, 600], "red":[600, 1023]}},
+                value=0,
+                max=1023,
+                min=0,
+                showCurrentValue=True,
+                units="",
+                style={
+                    'margin-bottom': '5%'
+                }
+            ),
+        ]
+    ),
+
     html.Div(id='hidden-div', style={'display': 'none'}),
 
 
@@ -161,19 +199,31 @@ app.layout = html.Div([
 
 ])
 
+
+@app.callback(
+    Output('light-intensity-indicator', 'value'),
+    Input('interval-component', 'n_intervals')
+)
+def update_light_intensity(value):
+    return light_intensity
+
+
 @app.callback(
     Output('humidity-indicator', 'value'),
     Input('interval-component', 'n_intervals')
 )
 def update_humidity(value):
-    dht = DHT.DHT(DHTPin)   #create a DHT class object
-    for i in range(0,15):            
-        chk = dht.readDHT11()     #read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
-        if (chk is dht.DHTLIB_OK):      #read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
-            print("Humidity : %.2f, \n"%(dht.humidity))
+    dht = DHT.DHT(DHTPin)  # create a DHT class object
+    for i in range(0, 15):
+        # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
+        chk = dht.readDHT11()
+        # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
+        if (chk is dht.DHTLIB_OK):
+            print("Humidity : %.2f, \n" % (dht.humidity))
             break
         time.sleep(0.1)
     return dht.humidity
+
 
 @app.callback(
     Output('temp-indicator', 'value'),
@@ -185,7 +235,7 @@ def update_output(value):
     for i in range(0, 15):
         chk = dht.readDHT11()
         if chk is dht.DHTLIB_OK:
-            print("Temperature : %.2f, \n"%(dht.temperature))
+            print("Temperature : %.2f, \n" % (dht.temperature))
             break
         time.sleep(0.1)
     if (dht.temperature > 18) and not email_sent:
@@ -195,8 +245,6 @@ def update_output(value):
     elif dht.temperature <= 18:
         email_sent = False
     return dht.temperature
-
-
 
 
 @app.callback(
@@ -228,7 +276,6 @@ def update_fan(value):
         return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False
 
 
-
 def send_email():
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
@@ -255,7 +302,6 @@ def send_email():
         server.ehlo()  # Can be omitted
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, msg.as_string())
-
 
 
 if __name__ == '__main__':
