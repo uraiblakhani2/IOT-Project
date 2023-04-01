@@ -12,6 +12,7 @@ import email
 import time
 
 import RPi.GPIO as GPIO
+from time import sleep
 
 
 
@@ -80,7 +81,7 @@ app.layout = html.Div([
     html.Div(
         dcc.Interval(
             id='interval-component',
-            interval=30000,  
+            interval=10000,  
             n_intervals=0
         )
     ),
@@ -136,7 +137,7 @@ app.layout = html.Div([
             html.H2('Fan Status'),
             
             html.Div(children=[
-                html.Img(id='FanOn', src='https://www.nicepng.com/png/detail/29-294805_png-file-fan-icon-transparent.png', ),
+                html.Img(id='FanOn', src='https://cdn.dribbble.com/users/3892547/screenshots/11096911/ezgif.com-resize.gif', ),
                 
             ]),
             html.Div(children=[
@@ -191,7 +192,7 @@ def update_output(value):
         send_email()
         email_sent = True
         print("Email sent!")
-    elif dht.temperature <= 17:
+    elif dht.temperature <= 18:
         email_sent = False
     return dht.temperature
 
@@ -211,11 +212,17 @@ def update_fan(value):
     if fan_on:
         fan_should_be_on = True
         last_email_received_time = time.time()
-    elif time.time() - last_email_received_time > 60:
+    elif time.time() - last_email_received_time > 10:
         email_received = False
         fan_should_be_on = False
 
     if fan_should_be_on:
+        # GPIO.setmode(GPIO.BCM)
+        # GPIO.setwarnings(False)
+        # Motor1 = 27
+        # GPIO.setup(Motor1, GPIO.OUT)
+        # GPIO.output(Motor1, GPIO.HIGH)
+
         return {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, True
     else:
         return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False

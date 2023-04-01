@@ -70,7 +70,17 @@
     margin-left: 600px;
   }
 
-  
+  #FanOn{
+    height: 200px;
+    width: 200px;
+    display: none;
+
+  }
+
+  #FanOff{
+    height: 200px;
+    width: 200px;
+  }
 
   #led-indicator {
     display: none;
