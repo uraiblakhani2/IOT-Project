@@ -18,7 +18,7 @@ from time import sleep
 
 
 DHTPin = 23  # define the pin of DHT11
-
+LEDPin = 24
 
 email_sent = False
 email_received = False
