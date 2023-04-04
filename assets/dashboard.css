@@ -80,6 +80,19 @@ body {
     width: 200px;
   }
 
+  #my-lightBulbOn{
+    height: 100px;
+    width: 100px;
+    margin-top: -60px;
+    display: none;
+  }
+
+  #my-lightBulbOff{
+    height: 100px;
+    width: 100px;
+    display: block;
+
+  }
   #led-indicator {
     display: none;
   }
@@ -88,7 +101,7 @@ body {
   #light-intensity-area {
     text-align: center;
     width: 250px;
-    height: 330px;
+    height: 400px;
     background-color: white;
     border-radius: 5px;
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
@@ -108,3 +121,10 @@ body {
     margin-bottom: 10px;
   }
   
+
+  .email-notification {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: green;
+}

@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import decode_header
 import imaplib
+from datetime import datetime
 import threading
 import email
 import time
@@ -18,14 +19,17 @@ from time import sleep
 
 
 DHTPin = 23  # define the pin of DHT11
-LEDPin = 24
+LEDPin = 18
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LEDPin, GPIO.OUT)
+# GPIO.setup(DHTPin, GPIO.IN)
 
 email_sent = False
+email_sent2 = False
 email_received = False
 GPIO.setwarnings(False)
 last_email_received_time = 0
 fan_should_be_on = False
-
 
 app = Dash(__name__, external_stylesheets=['./assets/dashboard.css'])
 
@@ -46,21 +50,36 @@ def on_message(client, userdata, message):
 
 mqtt_client.on_message = on_message
 mqtt_client.subscribe("lightIntensity")
+
+
 def mqtt_loop():
     while True:
         mqtt_client.loop()
+
 
 mqtt_thread = threading.Thread(target=mqtt_loop)
 mqtt_thread.daemon = True
 mqtt_thread.start()
 
 
+def control_LED_and_send_email():
+    global email_sent2
+    if light_intensity < 400 and not email_sent2:
+        GPIO.output(LEDPin, GPIO.HIGH)
+        sendLightEmail2()
+        print("mail sent")
+        email_sent2 = True
+    elif light_intensity >= 400:
+        GPIO.output(LEDPin, GPIO.LOW)
+        email_sent2 = False
+
+
 def check_email_reply():
     global email_received
     # Connect to the IMAP server
     imap_url = "imap-mail.outlook.com"
-    email_address = "uraibiotproject@outlook.com"
-    password = "bandar123"
+    email_address = "uraiblakhani893@outlook.com"
+    password = "iotproject123&"
     imap = imaplib.IMAP4_SSL(imap_url)
     imap.login(email_address, password)
     imap.select("Inbox")
@@ -103,7 +122,7 @@ app.layout = html.Div([
     html.Div(
         dcc.Interval(
             id='interval-component',
-            interval=10000,
+            interval=3000,
             n_intervals=0
         )
     ),
@@ -175,6 +194,8 @@ app.layout = html.Div([
         ]
     ),
 
+
+
     html.Div(
         id="light-intensity-area",
         children=[
@@ -192,19 +213,57 @@ app.layout = html.Div([
                     'margin-bottom': '5%'
                 }
             ),
+            html.Div(children=[
+                html.Img(id='my-lightBulbOn', src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Light_bulb_%28yellow%29_icon.svg/1200px-Light_bulb_%28yellow%29_icon.svg.png',
+                         style={'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}),
+            ]),
+            html.Div(children=[
+                html.Img(id='my-lightBulbOff', src='https://cdn-icons-png.flaticon.com/512/18/18310.png',
+                         style={'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}),
+            ]),
+
+            html.Div(
+          id="email-notification",
+        children=[
+        html.P("", id="email-notification-text")
+        ],
+        className="email-notification",
+        ),
+
+
         ]
     ),
 
+
+
+
     html.Div(id='hidden-div', style={'display': 'none'}),
 
-
-
-
-
-
-
-
 ])
+
+@app.callback(
+    Output('email-notification-text', 'children'),
+    Input('interval-component', 'n_intervals')
+)
+def update_email_notification(value):
+    global email_sent2
+    if email_sent2:
+        return "Email was sent."
+    else:
+        return ""
+    
+
+@app.callback(
+    Output('my-lightBulbOn', 'style'),
+    Output('my-lightBulbOff', 'style'),
+    Input('interval-component', 'n_intervals')
+)
+def update_lightbulb_images(value):
+    led_on = GPIO.input(LEDPin)
+    if led_on:
+        return {'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}, {'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}
+    else:
+        return {'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}, {'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}
 
 
 @app.callback(
@@ -212,7 +271,40 @@ app.layout = html.Div([
     Input('interval-component', 'n_intervals')
 )
 def update_light_intensity(value):
+    control_LED_and_send_email()
     return light_intensity
+
+
+def sendLightEmail2():
+
+    smtp_server = "smtp-mail.outlook.com"
+    port = 587  # For starttls
+    sender_email = "uraiblakhani893@outlook.com"
+    receiver_email = "uraiblakhani893@outlook.com"
+    password = "iotproject123&"
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    TEXT = "Light is now ON \n\nAt: " + current_time + " time"
+
+    subject = "Subject: Light is on"
+    body = TEXT
+
+    # Create the MIME object
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = subject
+
+    # Attach the body to the email
+    msg.attach(MIMEText(body, "plain"))
+
+    # Send the email
+    with smtplib.SMTP(smtp_server, port) as server:
+        server.ehlo()  # Can be omitted
+        server.starttls()
+        server.ehlo()  # Can be omitted
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
 
 
 @app.callback(
@@ -286,9 +378,9 @@ def update_fan(value):
 def send_email():
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
-    sender_email = "uraibiotproject@outlook.com"
-    receiver_email = "uraibiotproject@outlook.com"
-    password = "bandar123"
+    sender_email = "uraiblakhani893@outlook.com"
+    receiver_email = "uraiblakhani893@outlook.com"
+    password = "iotproject123&"
 
     subject = "Subject: Turn on FAN"
     body = "The current temperature is over 24 Would you like to turn on the fan?”"
