@@ -8,9 +8,12 @@ body {
 /* Style the header */
 #app-Header {
   padding: 20px;
+  margin-left: 100px;
   background: linear-gradient(to right, #1B98E0, #6DD5FA);
   border-radius: 10px;
+  text-align: center;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+
 }
 
 .app-header--title {
@@ -39,8 +42,12 @@ body {
     margin: 20px;
     padding-right: 40px;
     padding-left: 40px;
+    margin-left: 300px;
   }
 
+  
+
+  
 
   #humidity-area {
     text-align: center;
@@ -51,7 +58,7 @@ body {
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
     margin: 20px;
     margin-top: -350px;
-    margin-left: 300px;
+    margin-left: 600px;
   }
 
   
@@ -65,7 +72,7 @@ body {
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
     margin: 20px;
     margin-top: -350px;
-    margin-left: 600px;
+    margin-left: 900px;
   }
 
   #FanOn{
@@ -93,6 +100,23 @@ body {
     display: block;
 
   }
+
+
+  
+  #my-lightBulbOn2{
+    height: 100px;
+    width: 100px;
+    display: none;
+  }
+
+  #my-lightBulbOff2{
+    height: 100px;
+    width: 100px;
+    display: block;
+
+  }
+
+
   #led-indicator {
     display: none;
   }
@@ -107,7 +131,7 @@ body {
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
     margin: 20px;
     margin-top: -350px;
-    margin-left: 900px;
+    margin-left: 1200px;
   }
   
   #light-intensity-slider {
@@ -127,4 +151,15 @@ body {
     font-size: 18px;
     font-weight: bold;
     color: green;
+}
+
+#switch_area2 {
+  text-align: center;
+  width: 150px;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  margin-top: -300px;
+  margin-left: 300px;
+
 }

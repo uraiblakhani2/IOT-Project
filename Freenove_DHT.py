@@ -37,7 +37,7 @@ class DHT(object):
 		# start signal
 		GPIO.output(pin,GPIO.LOW)
 		time.sleep(wakeupDelay)
-		GPIO.output(pin,GPIO.HIGH)
+		# GPIO.output(pin,GPIO.HIGH)
 		# time.sleep(0.000001)
 		GPIO.setup(pin,GPIO.IN)
 		
