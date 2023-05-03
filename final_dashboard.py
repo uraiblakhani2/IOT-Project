@@ -443,188 +443,183 @@ def update_output(n):
     userNumber, username, desirePic, desireTemp, desireHumidity, desireLight = readUser()
     return username, desirePic, desireTemp, desireLight, desireHumidity, userNumber
 
-# @app.callback(
-#     Output('boolean-switch-result', 'children'),
-#     Output('led-indicator', 'value'),
-#     Output('my-lightBulbOn2', 'style'),
-#     Output('my-lightBulbOff2', 'style'),
-#     Input('our-boolean-switch', 'on')
-# )
-# def update_output(value):
-#     turnOnLED(True) if value else turnOnLED(False)
-#     on_style = {'width': '100px', 'height': '100px', 'display': 'inline-block'} if value else {'display': 'none'}
-#     off_style = {'width': '100px', 'height': '100px', 'display': 'inline-block'} if not value else {'display': 'none'}
-#     return ('LED is on', 'LED is off') [not value], value, on_style, off_style
+@app.callback(
+    Output('boolean-switch-result', 'children'),
+    Output('led-indicator', 'value'),
+    Output('my-lightBulbOn2', 'style'),
+    Output('my-lightBulbOff2', 'style'),
+    Input('our-boolean-switch', 'on')
+)
+def update_output(value):
+    turnOnLED(True) if value else turnOnLED(False)
+    on_style = {'width': '100px', 'height': '100px', 'display': 'inline-block'} if value else {'display': 'none'}
+    off_style = {'width': '100px', 'height': '100px', 'display': 'inline-block'} if not value else {'display': 'none'}
+    return ('LED is on', 'LED is off') [not value], value, on_style, off_style
     
-# def turnOnLED(active):
-#     GPIO.setwarnings(False)
-#     GPIO.setmode(GPIO.BCM)
-#     GPIO.setup(13,GPIO.OUT)
+def turnOnLED(active):
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(13,GPIO.OUT)
 
-#     if active == True:
-#         GPIO.output(13, GPIO.HIGH)
-#     if active == False:
-#         GPIO.output(13, GPIO.LOW)
-
-
-# @app.callback(
-#     Output('humidity-indicator', 'value'),
-#     Input('tempAndHumid-intensity-interval', 'n_intervals')
-# )
-# def update_humidity(value):
-#     dht = DHT.DHT(DHTPin)  # create a DHT class object
-#     for i in range(0, 15):
-#         # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
-#         chk = dht.readDHT11()
-#         # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
-#         if (chk is dht.DHTLIB_OK):
-#             print("Humidity : %.2f, \n" % (dht.humidity))
-#             break
-#         time.sleep(0.1)
-#     return dht.humidity
+    if active == True:
+        GPIO.output(13, GPIO.HIGH)
+    if active == False:
+        GPIO.output(13, GPIO.LOW)
 
 
-# @app.callback(
-#     Output('temp-indicator', 'value'),
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_output(value):
-#     global email_sent
-#     dht = DHT.DHT(DHTPin)  # create a DHT class object
-#     for i in range(0, 15):
-#         chk = dht.readDHT11()
-#         if chk is dht.DHTLIB_OK:
-#             print("Temperature : %.2f, \n" % (dht.temperature))
-#             break
-#         time.sleep(0.1)
-#     if (dht.temperature > 18) and not email_sent:
-#         send_email()
-#         email_sent = True
-#         print("Email sent!")
-#     elif dht.temperature <= 18:
-#         email_sent = False
-#     return dht.temperature
+@app.callback(
+    Output('humidity-indicator', 'value'),
+    Input('tempAndHumid-intensity-interval', 'n_intervals')
+)
+def update_humidity(value):
+    dht = DHT.DHT(DHTPin)  # create a DHT class object
+    for i in range(0, 15):
+        # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
+        chk = dht.readDHT11()
+        # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
+        if (chk is dht.DHTLIB_OK):
+            print("Humidity : %.2f, \n" % (dht.humidity))
+            break
+        time.sleep(0.1)
+    return dht.humidity
 
 
-
-
-# @app.callback(
-#     Output('email-notification-text', 'children'),
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_email_notification(value):
-#     global email_sent2
-#     if email_sent2:
-#         return "Email was sent."
-#     else:
-#         return ""
-
-
-
-# @app.callback(
-#     Output('my-lightBulbOn', 'style'),
-#     Output('my-lightBulbOff', 'style'),
-#     Input('interval-component', 'n_intervals')
-# )
-
-# def update_lightbulb_images(value):
-#     led_on = GPIO.input(LEDPin)
-#     if led_on:
-#         return {'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}, {'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}
-#     else:
-#         return {'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}, {'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}
+@app.callback(
+    Output('temp-indicator', 'value'),
+    Input('interval-component', 'n_intervals')
+)
+def update_output(value):
+    global email_sent
+    dht = DHT.DHT(DHTPin)  # create a DHT class object
+    for i in range(0, 15):
+        chk = dht.readDHT11()
+        if chk is dht.DHTLIB_OK:
+            print("Temperature : %.2f, \n" % (dht.temperature))
+            break
+        time.sleep(0.1)
+    if (dht.temperature > 18) and not email_sent:
+        send_email()
+        email_sent = True
+        print("Email sent!")
+    elif dht.temperature <= 18:
+        email_sent = False
+    return dht.temperature
 
 
 
 
-
-# @app.callback(
-#     Output('FanOn', 'style'),
-#     Output('FanOff', 'style'),
-#     Output('fan-indicator', 'value'),
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_fan(value):
-#     global email_sent, email_received, last_email_received_time, fan_should_be_on
-#     fan_on = check_email_reply()
-
-#     if fan_on:
-#         fan_should_be_on = True
-#         last_email_received_time = time.time()
-#     elif time.time() - last_email_received_time > 10:
-#         email_received = False
-#         fan_should_be_on = False
-
-#     if fan_should_be_on:
-#         # GPIO.setmode(GPIO.BCM)
-#         # GPIO.setwarnings(False)
-#         # Motor1 = 27
-#         # GPIO.setup(Motor1, GPIO.OUT)
-#         # GPIO.output(Motor1, GPIO.HIGH)
-
-#         return {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, True
-#     else:
-#         return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False
+@app.callback(
+    Output('email-notification-text', 'children'),
+    Input('interval-component', 'n_intervals')
+)
+def update_email_notification(value):
+    global email_sent2
+    if email_sent2:
+        return "Email was sent."
+    else:
+        return ""
 
 
-# def send_email():
-#     smtp_server = "smtp-mail.outlook.com"
-#     port = 587  # For starttls
-#     sender_email = "iot_maxter77@outlook.com"
-#     receiver_email = "iot_maxter77@outlook.com"
-#     password = "Itachi123&"
 
-#     subject = "Subject: Turn on FAN"
-#     body = "The current temperature is over 24 Would you like to turn on the fan?"
+@app.callback(
+    Output('my-lightBulbOn', 'style'),
+    Output('my-lightBulbOff', 'style'),
+    Input('interval-component', 'n_intervals')
+)
 
-#     # Create the MIME object
-#     msg = MIMEMultipart()
-#     msg["From"] = sender_email
-#     msg["To"] = receiver_email
-#     msg["Subject"] = subject
-
-#     # Attach the body to the email
-#     msg.attach(MIMEText(body, "plain"))
-
-#     # Send the email
-#     with smtplib.SMTP(smtp_server, port) as server:
-#         server.ehlo()  # Can be omitted
-#         server.starttls()
-#         server.ehlo()  # Can be omitted
-#         server.login(sender_email, password)
-#         server.sendmail(sender_email, receiver_email, msg.as_string())
+def update_lightbulb_images(value):
+    led_on = GPIO.input(LEDPin)
+    if led_on:
+        return {'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}, {'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}
+    else:
+        return {'display': 'none', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}, {'display': 'block', 'height': '100px', 'width': '100px', 'margin-top': '-60px', 'margin-left': '70px'}
 
 
-# def sendLightEmail2():
 
-#     smtp_server = "smtp-mail.outlook.com"
-#     port = 587  # For starttls
-#     sender_email = "iot_maxter77@outlook.com"
-#     receiver_email = "iot_maxter77@outlook.com"
-#     password = "Itachi123&"
-#     now = datetime.now()
-#     current_time = now.strftime("%H:%M:%S")
-#     TEXT = "Light is now ON \n\nAt: " + current_time + " time"
 
-#     subject = "Subject: Light is on"
-#     body = TEXT
 
-#     # Create the MIME object
-#     msg = MIMEMultipart()
-#     msg["From"] = sender_email
-#     msg["To"] = receiver_email
-#     msg["Subject"] = subject
+@app.callback(
+    Output('FanOn', 'style'),
+    Output('FanOff', 'style'),
+    Output('fan-indicator', 'value'),
+    Input('interval-component', 'n_intervals')
+)
+def update_fan(value):
+    global email_sent, email_received, last_email_received_time, fan_should_be_on
+    fan_on = check_email_reply()
 
-#     # Attach the body to the email
-#     msg.attach(MIMEText(body, "plain"))
+    if fan_on:
+        fan_should_be_on = True
+        last_email_received_time = time.time()
+    elif time.time() - last_email_received_time > 10:
+        email_received = False
+        fan_should_be_on = False
 
-#     # Send the email
-#     with smtplib.SMTP(smtp_server, port) as server:
-#         server.ehlo()  # Can be omitted
-#         server.starttls()
-#         server.ehlo()  # Can be omitted
-#         server.login(sender_email, password)
-#         server.sendmail(sender_email, receiver_email, msg.as_string())
+    if fan_should_be_on:
+       
+        return {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, True
+    else:
+        return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False
+
+
+def send_email():
+    smtp_server = "smtp-mail.outlook.com"
+    port = 587  # For starttls
+    sender_email = "iot_maxter77@outlook.com"
+    receiver_email = "iot_maxter77@outlook.com"
+    password = "Itachi123&"
+
+    subject = "Subject: Turn on FAN"
+    body = "The current temperature is over 24 Would you like to turn on the fan?"
+
+    # Create the MIME object
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = subject
+
+    # Attach the body to the email
+    msg.attach(MIMEText(body, "plain"))
+
+    # Send the email
+    with smtplib.SMTP(smtp_server, port) as server:
+        server.ehlo()  # Can be omitted
+        server.starttls()
+        server.ehlo()  # Can be omitted
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+
+
+def sendLightEmail2():
+
+    smtp_server = "smtp-mail.outlook.com"
+    port = 587  # For starttls
+    sender_email = "iot_maxter77@outlook.com"
+    receiver_email = "iot_maxter77@outlook.com"
+    password = "Itachi123&"
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    TEXT = "Light is now ON \n\nAt: " + current_time + " time"
+
+    subject = "Subject: Light is on"
+    body = TEXT
+
+    # Create the MIME object
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = subject
+
+    # Attach the body to the email
+    msg.attach(MIMEText(body, "plain"))
+
+    # Send the email
+    with smtplib.SMTP(smtp_server, port) as server:
+        server.ehlo()  # Can be omitted
+        server.starttls()
+        server.ehlo()  # Can be omitted
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
 
 
 if __name__ == '__main__':

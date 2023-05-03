@@ -69,12 +69,12 @@ void reconnect() {
 
 void loop() {
 
+  send_light();
 
   if (!client.connected()) {
     reconnect();
   }
   client.loop();
-  send_light();
 
   if (!rfid.PICC_IsNewCardPresent())
     return;
