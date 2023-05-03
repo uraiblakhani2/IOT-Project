@@ -43,21 +43,19 @@ body {
     padding-right: 40px;
     padding-left: 40px;
     margin-left: 300px;
+    height: 400px;
   }
 
   
-
-  
-
   #humidity-area {
     text-align: center;
     width: 250px;
-    height: 330px;
+    height: 400px;
     background-color: white;
     border-radius: 5px;
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
     margin: 20px;
-    margin-top: -350px;
+    margin-top: -420px;
     margin-left: 600px;
   }
 
@@ -66,12 +64,12 @@ body {
   #fan-area {
     text-align: center;
     width: 250px;
-    height: 330px;
+    height: 400px;
     background-color: white;
     border-radius: 5px;
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
     margin: 20px;
-    margin-top: -350px;
+    margin-top: -420px;
     margin-left: 900px;
   }
 
@@ -130,7 +128,7 @@ body {
     border-radius: 5px;
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
     margin: 20px;
-    margin-top: -350px;
+    margin-top: -420px;
     margin-left: 1200px;
   }
   
