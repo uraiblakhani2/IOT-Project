@@ -122,8 +122,8 @@ void loop() {
 void send_light() {
 
   int lightIntensity = analogRead(photoresistorPin);
-  Serial.println("Light: ");
-  Serial.println(lightIntensity);
+  Serial.print("Light: ");
+  Serial.print(lightIntensity);
 
 
   char payload[10];

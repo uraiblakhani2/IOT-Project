@@ -6,6 +6,7 @@ import Freenove_DHT as DHT
 import time
 import paho.mqtt.client as mqtt
 from dash import dcc
+import bluetooth
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -24,32 +25,36 @@ import sqlite3
 
 import RPi.GPIO as GPIO
 from time import sleep
-
+#User Info when User is not loged in 
 username = 'Unknown'
 rfid = 'User RFID'
 desirePic = 'https://media.tenor.com/w-ddWw98CpIAAAAd/asta-black-clover.gif'
 desireTemperature = 15
 desireHumidity = 40
-desireLight = 1000
+desireLight = 300
 
 
 
 last_username = None
-light_in = 1000
+light_in = 0
 last_rfid_message = None
 
 
 
-DHTPin = 17  # define the pin of DHT11
-LEDPin = 18
+DHTPin = 25  # define the pin of DHT11
+LEDPin = 19
+MotorEnable = 27
 GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 GPIO.setup(LEDPin, GPIO.OUT)
-GPIO.setup(DHTPin, GPIO.IN)
+
+GPIO.setup(MotorEnable, GPIO.OUT)
+
 
 email_sent = False
 email_sent2 = False
+scanned = False
 email_received = False
-GPIO.setwarnings(False)
 last_email_received_time = 0
 fan_should_be_on = False
 
@@ -65,7 +70,7 @@ def on_message(client, userdata, msg):
 
 mqtt_client_instance = mqtt_client.Client()
 mqtt_client_instance.on_message = on_message
-mqtt_client_instance.connect("192.168.2.67")
+mqtt_client_instance.connect("192.168.72.197")
 mqtt_client_instance.subscribe("lightIntensity")
 mqtt_client_instance.subscribe("IoTLab/rfid")
 mqtt_client_instance.loop_start()
@@ -76,8 +81,13 @@ def readUser():
     global userNumber
     global sentRFID
     global last_username
+    global desireTemperature
+    global desireHumidity
+    global desireLight
     userNumber = str(last_rfid_message)
     print(userNumber)
+    
+    #store the info taken by the card into the database
 
     dbconnect = sqlite3.connect("iotproject.db")
     dbconnect.row_factory = sqlite3.Row
@@ -108,7 +118,7 @@ def readUser():
     desirePic = 'https://media.tenor.com/w-ddWw98CpIAAAAd/asta-black-clover.gif'
     desireTemperature = 15
     desireHumidity = 40
-    desireLight = 1000
+    desireLight = 300
     sentRFID = False
 
     return userNumber, username, desirePic, desireTemperature, desireHumidity, desireLight
@@ -120,10 +130,25 @@ def readLight():
     return light_in
 
 
+
+def get_nearby_bluetooth_devices():
+    global bluetooth, scanned
+    print("Scanning for bluetooth devices:")
+    devices = bluetooth.discover_devices(lookup_names = True, lookup_class = True)
+    number_of_devices = len(devices)
+    print(number_of_devices,"devices found")
+    scanned = True
+
+    return number_of_devices
     
 
 def control_LED_and_send_email(light_intensity):
     global email_sent2
+    print("light_intensity : ") 
+    print(light_intensity) 
+    print("desire : ") 
+    print(desireLight) 
+
     if light_intensity < desireLight and not email_sent2:
         GPIO.output(LEDPin, GPIO.HIGH)
         sendLightEmail2()
@@ -138,8 +163,8 @@ def sendEmailRFID(username):
 
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
-    sender_email = "iot_maxter77@outlook.com"
-    receiver_email = "iot_maxter77@outlook.com"
+    sender_email = "iot_maxter2024@outlook.com"
+    receiver_email = "iot_maxter2024@outlook.com"
     password = "Itachi123&"
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -168,7 +193,7 @@ def sendEmailRFID(username):
 def check_email_reply():
     global email_received
     imap_url = "imap-mail.outlook.com"
-    email_address = "iot_maxter77@outlook.com"
+    email_address = "iot_maxter2024@outlook.com"
     password = "Itachi123&"
     imap = imaplib.IMAP4_SSL(imap_url)
     # imap.starttls()  # Remove this line
@@ -196,6 +221,7 @@ def check_email_reply():
                 if "YES" in body.upper() and not email_received:
                     email_received = True
                     fan_on = True
+                    
     imap.close()
     return fan_on
 
@@ -223,20 +249,20 @@ app.layout = html.Div([
             html.P(id='my-rfid', children=[rfid]),
             html.H2(id='my-username', children=[username]),
             html.Hr(),
-            daq.NumericInput(
+            daq.LEDDisplay(
                 id='my-light-desire',
                 label='Desired Light',
                 value=desireLight,
                 
             ),
             html.Hr(),
-            daq.NumericInput(
+            daq.LEDDisplay(
                 id='my-temp-desire',
                 label='Desired Temperature',
                 value=desireTemperature,
            ),
             html.Hr(),
-            daq.NumericInput(
+            daq.LEDDisplay(
                 id='my-humid-desire',
                 label='Desired Humidity',
                 value=desireHumidity,
@@ -258,7 +284,7 @@ app.layout = html.Div([
     html.Div(
         dcc.Interval(
             id='interval-component',
-            interval=2000,
+            interval=3000,
             n_intervals=0
         )
     ),
@@ -275,7 +301,7 @@ app.layout = html.Div([
                 id='temp-indicator',
                 min=0,
                 max=105,
-                value=5,
+                value=20,
                 showCurrentValue=True,
                 units="C",
                 style={
@@ -293,7 +319,7 @@ app.layout = html.Div([
                 id='humidity-indicator',
                 color={"gradient": True, "ranges": {
                     "green": [0, 6], "yellow":[6, 8], "red":[8, 10]}},
-                value=2,
+                value=20,
                 max=100,
                 min=0,
                 showCurrentValue=True,
@@ -312,6 +338,8 @@ app.layout = html.Div([
         id="fan-area",
         children=[
             html.H2('Fan Status'),
+            
+
 
             html.Div(children=[
                 html.Img(
@@ -322,11 +350,13 @@ app.layout = html.Div([
                 html.Img(
                     id='FanOff', src='https://cdn-icons-png.flaticon.com/512/925/925993.png', ),
             ]),
+            # daq.PowerButton(id='power-button', on=False),
             daq.Indicator(
                 id='fan-indicator',
                 value=True,
                 color="#00cc96"
             )
+            
         ]
     ),
 
@@ -383,29 +413,6 @@ app.layout = html.Div([
     
 ),
 
-html.Div(
-        id="switch_area2",
-        children=[
-            html.H2('LED SWITCH'),
-            daq.BooleanSwitch(id='our-boolean-switch', on=False),
-            html.Div(id='boolean-switch-result'),
-             html.Div(children=[
-                        html.Img(id='my-lightBulbOn2',src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Light_bulb_%28yellow%29_icon.svg/1200px-Light_bulb_%28yellow%29_icon.svg.png',
-
-                        ),
-                    ]),
-        html.Div(children=[
-                        html.Img(id='my-lightBulbOff2',src='https://cdn-icons-png.flaticon.com/512/18/18310.png',),
-                    ]),
-
-
-            daq.Indicator(
-                id='led-indicator',
-                value=True,
-                color="#00cc96"
-            )
-        ]
-    ),
 
 
 
@@ -413,7 +420,19 @@ html.Div(
     ),
 
 
+# html.Div(
+#     id="bluetooth-area",
+#     children=[
+#         html.H2('Nearby Bluetooth Devices'),
+#         html.Div(id='bluetooth-devices-count'),
+#     ]
+# ),
 
+# dcc.Interval(
+#     id='bluetooth-update-interval',
+#     interval=10000,  # in milliseconds
+#     n_intervals=0
+# ),
 
     html.Div(id='hidden-div', style={'display': 'none'}),
 
@@ -423,12 +442,7 @@ html.Div(
 
 
 
-@app.callback(Output('light-intensity-indicator', 'value'),
-              Input('light-intensity-interval', 'n_intervals'))
-def update_light_intensity(value):
-    light_intensity = readLight()
-    control_LED_and_send_email(light_intensity)
-    return light_intensity
+
 
 
 
@@ -443,67 +457,34 @@ def update_output(n):
     userNumber, username, desirePic, desireTemp, desireHumidity, desireLight = readUser()
     return username, desirePic, desireTemp, desireLight, desireHumidity, userNumber
 
-@app.callback(
-    Output('boolean-switch-result', 'children'),
-    Output('led-indicator', 'value'),
-    Output('my-lightBulbOn2', 'style'),
-    Output('my-lightBulbOff2', 'style'),
-    Input('our-boolean-switch', 'on')
-)
-def update_output(value):
-    turnOnLED(True) if value else turnOnLED(False)
-    on_style = {'width': '100px', 'height': '100px', 'display': 'inline-block'} if value else {'display': 'none'}
-    off_style = {'width': '100px', 'height': '100px', 'display': 'inline-block'} if not value else {'display': 'none'}
-    return ('LED is on', 'LED is off') [not value], value, on_style, off_style
-    
-def turnOnLED(active):
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(13,GPIO.OUT)
-
-    if active == True:
-        GPIO.output(13, GPIO.HIGH)
-    if active == False:
-        GPIO.output(13, GPIO.LOW)
-
+@app.callback(Output('light-intensity-indicator', 'value'),
+              Input('light-intensity-interval', 'n_intervals'))
+def update_light_intensity(value):
+    light_intensity = readLight()
+    control_LED_and_send_email(light_intensity)
+    return light_intensity
 
 @app.callback(
     Output('humidity-indicator', 'value'),
+    Output('temp-indicator', 'value'),
     Input('tempAndHumid-intensity-interval', 'n_intervals')
 )
 def update_humidity(value):
-    dht = DHT.DHT(DHTPin)  # create a DHT class object
-    for i in range(0, 15):
-        # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
-        chk = dht.readDHT11()
-        # read DHT11 and get a return value. Then determine whether data read is normal according to the return value.
-        if (chk is dht.DHTLIB_OK):
-            print("Humidity : %.2f, \n" % (dht.humidity))
-            break
-        time.sleep(0.1)
-    return dht.humidity
-
-
-@app.callback(
-    Output('temp-indicator', 'value'),
-    Input('interval-component', 'n_intervals')
-)
-def update_output(value):
     global email_sent
-    dht = DHT.DHT(DHTPin)  # create a DHT class object
+    dht = DHT.DHT(DHTPin)  
     for i in range(0, 15):
         chk = dht.readDHT11()
-        if chk is dht.DHTLIB_OK:
-            print("Temperature : %.2f, \n" % (dht.temperature))
+        if (chk is dht.DHTLIB_OK):
+            print("Humidity : %.2f, \t Temperature : %.2f \n"%(dht.humidity,dht.temperature))
             break
-        time.sleep(0.1)
-    if (dht.temperature > 18) and not email_sent:
+    if (dht.temperature > desireTemperature) and not email_sent:
         send_email()
         email_sent = True
         print("Email sent!")
-    elif dht.temperature <= 18:
+    elif dht.temperature <= desireTemperature:
         email_sent = False
-    return dht.temperature
+    return dht.humidity, dht.temperature
+
 
 
 
@@ -556,17 +537,38 @@ def update_fan(value):
         fan_should_be_on = False
 
     if fan_should_be_on:
+        GPIO.output(MotorEnable, GPIO.HIGH)
        
         return {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, True
     else:
+        GPIO.output(MotorEnable, GPIO.LOW)
         return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False
 
 
+# def toggle_fan(n_clicks, fan_indicator):
+#     if n_clicks > 0:
+#         if fan_indicator:
+#             GPIO.output(MotorEnable, GPIO.LOW)
+#             return {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, False
+#         else:
+#             GPIO.output(MotorEnable, GPIO.HIGH)
+#             return {'display': 'block', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, {'display': 'none', 'height': '200px', 'width': '200px', 'margin-left': '40px'}, True
+#     else:
+#         return dash.no_update, dash.no_update, dash.no_update
+
+# @app.callback(
+#     Output('bluetooth-devices-count', 'children'),
+#     Input('bluetooth-update-interval', 'n_intervals')
+# )
+# def update_bluetooth_devices_count(value):
+#     nearby_devices = get_nearby_bluetooth_devices()
+#     return nearby_devices
+    
 def send_email():
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
-    sender_email = "iot_maxter77@outlook.com"
-    receiver_email = "iot_maxter77@outlook.com"
+    sender_email = "iot_maxter2024@outlook.com"
+    receiver_email = "iot_maxter2024@outlook.com"
     password = "Itachi123&"
 
     subject = "Subject: Turn on FAN"
@@ -594,8 +596,8 @@ def sendLightEmail2():
 
     smtp_server = "smtp-mail.outlook.com"
     port = 587  # For starttls
-    sender_email = "iot_maxter77@outlook.com"
-    receiver_email = "iot_maxter77@outlook.com"
+    sender_email = "iot_maxter2024@outlook.com"
+    receiver_email = "iot_maxter2024@outlook.com"
     password = "Itachi123&"
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")

@@ -16,7 +16,6 @@ class DHT(object):
 	
 	DHTLIB_DHT11_WAKEUP = 0.020#0.018		#18ms
 	DHTLIB_TIMEOUT = 0.0001			#100us
-	GPIO.setwarnings(False)
 	
 	humidity = 0
 	temperature = 0
@@ -25,6 +24,8 @@ class DHT(object):
 		self.pin = pin
 		self.bits = [0,0,0,0,0]
 		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(self.pin, GPIO.OUT)
+		GPIO.output(self.pin,GPIO.HIGH)
 	#Read DHT sensor, store the original data in bits[]	
 	def readSensor(self,pin,wakeupDelay):
 		mask = 0x80
@@ -37,7 +38,7 @@ class DHT(object):
 		# start signal
 		GPIO.output(pin,GPIO.LOW)
 		time.sleep(wakeupDelay)
-		# GPIO.output(pin,GPIO.HIGH)
+		GPIO.output(pin,GPIO.HIGH)
 		# time.sleep(0.000001)
 		GPIO.setup(pin,GPIO.IN)
 		
